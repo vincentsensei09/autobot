@@ -4,6 +4,38 @@ document.getElementById('agreeCheckbox').addEventListener('change', function() {
 
 let Commands = [{ 'commands': [] }, { 'handleEvent': [] }];
 
+// Command checkbox handlers
+const commandCheckboxes = ['cmd-ping', 'cmd-help', 'cmd-info', 'cmd-echo', 'cmd-ai', 'cmd-tiktok'];
+
+commandCheckboxes.forEach(id => {
+  const checkbox = document.getElementById(id);
+  if (checkbox) {
+    checkbox.addEventListener('change', function() {
+      const cmdName = id.replace('cmd-', '');
+      if (this.checked) {
+        if (!Commands[0].commands.includes(cmdName)) {
+          Commands[0].commands.push(cmdName);
+        }
+      } else {
+        Commands[0].commands = Commands[0].commands.filter(c => c !== cmdName);
+      }
+    });
+  }
+});
+
+// Initialize commands from default checked boxes
+window.addEventListener('DOMContentLoaded', function() {
+  commandCheckboxes.forEach(id => {
+    const checkbox = document.getElementById(id);
+    if (checkbox && checkbox.checked) {
+      const cmdName = id.replace('cmd-', '');
+      if (!Commands[0].commands.includes(cmdName)) {
+        Commands[0].commands.push(cmdName);
+      }
+    }
+  });
+});
+
 function measurePing() {
   var xhr = new XMLHttpRequest();
   var startTime, endTime;
