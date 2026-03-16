@@ -165,6 +165,65 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// Logout endpoint - only the creator can logout their own bots
+app.post('/logout', async (req, res) => {
+  const { creatorUID, botUserID } = req.body;
+  
+  try {
+    if (!creatorUID || !botUserID) {
+      return res.status(400).json({
+        error: true,
+        message: 'Missing creatorUID or botUserID'
+      });
+    }
+    
+    // Read history.json to check if the requester is the creator
+    const configFile = './data/history.json';
+    const configData = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
+    const botAccount = configData.find(item => item.userid === botUserID);
+    
+    if (!botAccount) {
+      return res.status(404).json({
+        error: true,
+        message: 'Bot account not found'
+      });
+    }
+    
+    // Get the creator - support both new 'creator' field and legacy 'admin' array
+    const storedCreator = botAccount.creator || (botAccount.admin && botAccount.admin.length > 0 ? botAccount.admin[0] : null);
+    
+    // Check if the requester is the creator of this bot
+    if (storedCreator !== creatorUID) {
+      return res.status(403).json({
+        error: true,
+        message: 'You are not the creator of this bot. Only the creator can logout their bot.'
+      });
+    }
+    
+    // Check if the bot is currently logged in (in Utils.account)
+    const isLoggedIn = Utils.account.has(botUserID);
+    
+    // Delete from in-memory account if logged in
+    if (isLoggedIn) {
+      Utils.account.delete(botUserID);
+    }
+    
+    // Delete the bot's session file and history
+    await deleteThisUser(botUserID);
+    
+    res.status(200).json({
+      success: true,
+      message: `Bot ${botUserID} has been logged out successfully by creator ${creatorUID}`
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.status(500).json({
+      error: true,
+      message: error.message
+    });
+  }
+});
+
 app.listen(3000, () => {
   console.log(chalk.green(`Server running at http://localhost:3000`));
 });
@@ -375,6 +434,8 @@ async function addThisUser(userid, enableCommands, state, prefix, admin, blackli
   if (fs.existsSync(sessionFile)) return;
   
   const configData = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
+  // The creator is the first admin in the array
+  const creator = admin && admin.length > 0 ? admin[0] : null;
   configData.push({
     userid,
     prefix: prefix || "",
@@ -382,6 +443,7 @@ async function addThisUser(userid, enableCommands, state, prefix, admin, blackli
     blacklist: blacklist || [],
     enableCommands,
     time: 0,
+    creator: creator // Store the creator's userid
   });
   
   fs.writeFileSync(configFile, JSON.stringify(configData, null, 2));
