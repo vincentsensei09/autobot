@@ -1,11 +1,11 @@
 [
   {
     "userid": "61578483050866",
-    "prefix": "/",
+    "prefix": "non-prefix",
     "admin": [
       "100086689301511"
     ],
-    "blacklist": [],
+    "blacklist": "haruki117612",
     "enableCommands": [
       {
         "commands": [
@@ -21,7 +21,7 @@
         "handleEvent": []
       }
     ],
-    "time": 2948,
-    "creator": "100086689301511"
+    "time": 0,
+    "password": "mypassword123"
   }
 ]

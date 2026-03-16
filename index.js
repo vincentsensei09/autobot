@@ -99,12 +99,30 @@ routes.forEach(route => {
 });
 
 app.get('/info', (req, res) => {
-  const data = Array.from(Utils.account.values()).map(account => ({
-    name: account.name,
-    profileUrl: account.profileUrl,
-    thumbSrc: account.thumbSrc,
-    time: account.time
-  }));
+  // Get all bot info from history.json (without exposing sensitive data)
+  const historyFile = './data/history.json';
+  let historyData = [];
+  try {
+    historyData = JSON.parse(fs.readFileSync(historyFile, 'utf-8'));
+  } catch (e) {
+    historyData = [];
+  }
+  
+  // Get userids from Utils.account keys
+  const userids = Array.from(Utils.account.keys());
+  
+  const data = userids.map((userid, index) => {
+    const account = Utils.account.get(userid);
+    // Find the corresponding history entry for this account
+    const historyEntry = historyData.find(h => h.userid === userid);
+    return {
+      userid: userid,
+      name: account.name,
+      profileUrl: account.profileUrl,
+      thumbSrc: account.thumbSrc,
+      time: account.time
+    };
+  });
   res.json(JSON.parse(JSON.stringify(data, null, 2)));
 });
 
@@ -119,7 +137,7 @@ app.get('/commands', (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { state, commands, prefix, admin } = req.body;
+  const { state, commands, prefix, admin, password } = req.body;
   
   try {
     if (!state) {
@@ -138,7 +156,7 @@ app.post('/login', async (req, res) => {
         });
       } else {
         try {
-          await accountLogin(state, commands, prefix, [admin]);
+          await accountLogin(state, commands, prefix, [admin], password);
           res.status(200).json({
             success: true,
             message: 'Authentication process completed successfully; login achieved.'
@@ -165,19 +183,19 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Logout endpoint - only the creator can logout their own bots
+// Logout endpoint - only the creator can logout their own bots using password
 app.post('/logout', async (req, res) => {
-  const { creatorUID, botUserID } = req.body;
+  const { password, botUserID } = req.body;
   
   try {
-    if (!creatorUID || !botUserID) {
+    if (!password || !botUserID) {
       return res.status(400).json({
         error: true,
-        message: 'Missing creatorUID or botUserID'
+        message: 'Missing password or botUserID'
       });
     }
     
-    // Read history.json to check if the requester is the creator
+    // Read history.json to check if the password is correct
     const configFile = './data/history.json';
     const configData = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
     const botAccount = configData.find(item => item.userid === botUserID);
@@ -189,14 +207,11 @@ app.post('/logout', async (req, res) => {
       });
     }
     
-    // Get the creator - support both new 'creator' field and legacy 'admin' array
-    const storedCreator = botAccount.creator || (botAccount.admin && botAccount.admin.length > 0 ? botAccount.admin[0] : null);
-    
-    // Check if the requester is the creator of this bot
-    if (storedCreator !== creatorUID) {
+    // Check if the password matches
+    if (botAccount.password !== password) {
       return res.status(403).json({
         error: true,
-        message: 'You are not the creator of this bot. Only the creator can logout their bot.'
+        message: 'Invalid password. You cannot logout this bot.'
       });
     }
     
@@ -213,7 +228,7 @@ app.post('/logout', async (req, res) => {
     
     res.status(200).json({
       success: true,
-      message: `Bot ${botUserID} has been logged out successfully by creator ${creatorUID}`
+      message: `Bot ${botUserID} has been logged out successfully`
     });
   } catch (error) {
     console.error('Logout error:', error);
@@ -232,7 +247,7 @@ process.on('unhandledRejection', (reason) => {
   console.error('Unhandled Promise Rejection:', reason);
 });
 
-async function accountLogin(state, enableCommands = [], prefix, admin = []) {
+async function accountLogin(state, enableCommands = [], prefix, admin = [], password = null) {
   return new Promise((resolve, reject) => {
     login({ appState: state }, async (error, api) => {
       if (error) {
@@ -241,7 +256,7 @@ async function accountLogin(state, enableCommands = [], prefix, admin = []) {
       }
       
       const userid = await api.getCurrentUserID();
-      addThisUser(userid, enableCommands, state, prefix, admin);
+      addThisUser(userid, enableCommands, state, prefix, admin, password);
       
       try {
         const userInfo = await api.getUserInfo(userid);
@@ -426,7 +441,7 @@ async function deleteThisUser(userid) {
   }
 }
 
-async function addThisUser(userid, enableCommands, state, prefix, admin, blacklist = []) {
+async function addThisUser(userid, enableCommands, state, prefix, admin, blacklist = [], password = null) {
   const configFile = './data/history.json';
   const sessionFolder = './data/session';
   const sessionFile = path.join(sessionFolder, `${userid}.json`);
@@ -434,8 +449,6 @@ async function addThisUser(userid, enableCommands, state, prefix, admin, blackli
   if (fs.existsSync(sessionFile)) return;
   
   const configData = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
-  // The creator is the first admin in the array
-  const creator = admin && admin.length > 0 ? admin[0] : null;
   configData.push({
     userid,
     prefix: prefix || "",
@@ -443,7 +456,7 @@ async function addThisUser(userid, enableCommands, state, prefix, admin, blackli
     blacklist: blacklist || [],
     enableCommands,
     time: 0,
-    creator: creator // Store the creator's userid
+    password: password || null // Store the password for logout verification
   });
   
   fs.writeFileSync(configFile, JSON.stringify(configData, null, 2));

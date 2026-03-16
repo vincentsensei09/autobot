@@ -44,6 +44,29 @@
       text-align: center;
       padding: 50px;
     }
+    .creator-input {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .logout-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .logout-btn:hover {
+      background: #c82333;
+    }
+    .logout-btn:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -72,6 +95,17 @@
   
   <div class="container">
     <h1 class="col text-center" style="font-size: 20px; padding: 10px;">Active Bot Accounts</h1>
+    
+    <!-- Password Input -->
+    <div class="creator-input">
+      <label for="logoutPassword"><strong>Logout Password:</strong></label>
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <input type="password" id="logoutPassword" class="form-control" placeholder="Enter your logout password">
+        <button class="btn btn-primary" onclick="savePassword()">Save</button>
+      </div>
+      <small class="text-muted">Enter the password you set when adding the bot to enable logout.</small>
+    </div>
+    
     <div id="accounts-container">
       <div class="loading">
         <i class="fas fa-spinner fa-spin fa-3x"></i>
@@ -86,6 +120,25 @@
   </div>
   
   <script>
+    // Load saved password from localStorage
+    window.onload = function() {
+      const savedPassword = localStorage.getItem('logoutPassword');
+      if (savedPassword) {
+        document.getElementById('logoutPassword').value = savedPassword;
+      }
+    };
+    
+    function savePassword() {
+      const password = document.getElementById('logoutPassword').value.trim();
+      if (password) {
+        localStorage.setItem('logoutPassword', password);
+        alert('Password saved! You can now logout your bots.');
+        loadAccounts();
+      } else {
+        alert('Please enter a password');
+      }
+    }
+    
     function updateTime() {
       const now = new Date();
       const options = {
@@ -117,11 +170,50 @@
     }
     setInterval(measurePing, 1000);
     
+    async function logoutBot(botUserID) {
+      const password = document.getElementById('logoutPassword').value.trim();
+      
+      if (!password) {
+        alert('Please enter your logout password first!');
+        return;
+      }
+      
+      if (!confirm('Are you sure you want to logout this bot? This action cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            password: password,
+            botUserID: botUserID
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Bot logged out successfully!');
+          loadAccounts();
+        } else {
+          alert('Error: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error logging out:', error);
+        alert('Error logging out bot');
+      }
+    }
+    
     async function loadAccounts() {
       try {
         const response = await fetch('/info');
         const accounts = await response.json();
         const container = document.getElementById('accounts-container');
+        const password = document.getElementById('logoutPassword').value.trim();
         
         if (accounts.length === 0) {
           container.innerHTML = '<div class="text-center"><p>No active accounts</p></div>';
@@ -133,6 +225,10 @@
         accounts.forEach(account => {
           const card = document.createElement('div');
           card.className = 'account-card';
+          
+          // Show logout button if password is entered
+          const showLogout = password && password.length > 0;
+          
           card.innerHTML = `
             <img src="${account.thumbSrc || 'https://via.placeholder.com/60'}" alt="Avatar" class="account-avatar">
             <div class="account-info">
@@ -140,6 +236,7 @@
               <p>Online Time: ${account.time || 0} seconds</p>
             </div>
             <span class="online-badge">Online</span>
+            ${showLogout ? `<button class="logout-btn" onclick="logoutBot('${account.userid}')">Logout</button>` : ''}
           `;
           container.appendChild(card);
         });
