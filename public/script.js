@@ -4,37 +4,59 @@ document.getElementById('agreeCheckbox').addEventListener('change', function() {
 
 let Commands = [{ 'commands': [] }, { 'handleEvent': [] }];
 
-// Command checkbox handlers
-const commandCheckboxes = ['cmd-ping', 'cmd-help', 'cmd-info', 'cmd-echo', 'cmd-ai', 'cmd-tiktok'];
-
-commandCheckboxes.forEach(id => {
-  const checkbox = document.getElementById(id);
-  if (checkbox) {
-    checkbox.addEventListener('change', function() {
-      const cmdName = id.replace('cmd-', '');
-      if (this.checked) {
-        if (!Commands[0].commands.includes(cmdName)) {
-          Commands[0].commands.push(cmdName);
+// Dynamic command loading from server
+async function loadCommands() {
+  try {
+    const response = await fetch('/commands');
+    const { commands, handleEvent } = await response.json();
+    const container = document.getElementById('commandsContainer');
+    
+    if (!container) return;
+    container.innerHTML = '';
+    
+    // Add commands as checkboxes
+    commands.forEach((cmd, index) => {
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = 'cmd-' + cmd;
+      checkbox.className = 'command-checkbox';
+      checkbox.checked = true;
+      
+      // Add to Commands array when checked
+      checkbox.addEventListener('change', function() {
+        if (this.checked) {
+          if (!Commands[0].commands.includes(cmd)) {
+            Commands[0].commands.push(cmd);
+          }
+        } else {
+          Commands[0].commands = Commands[0].commands.filter(c => c !== cmd);
         }
-      } else {
-        Commands[0].commands = Commands[0].commands.filter(c => c !== cmdName);
-      }
+      });
+      
+      // Initially add to Commands
+      Commands[0].commands.push(cmd);
+      
+      const label = document.createElement('label');
+      label.htmlFor = 'cmd-' + cmd;
+      label.className = 'command-label';
+      label.textContent = cmd;
+      
+      container.appendChild(checkbox);
+      container.appendChild(label);
     });
-  }
-});
-
-// Initialize commands from default checked boxes
-window.addEventListener('DOMContentLoaded', function() {
-  commandCheckboxes.forEach(id => {
-    const checkbox = document.getElementById(id);
-    if (checkbox && checkbox.checked) {
-      const cmdName = id.replace('cmd-', '');
-      if (!Commands[0].commands.includes(cmdName)) {
-        Commands[0].commands.push(cmdName);
-      }
+    
+    console.log('Loaded ' + commands.length + ' commands');
+  } catch (error) {
+    console.error('Error loading commands:', error);
+    const container = document.getElementById('commandsContainer');
+    if (container) {
+      container.innerHTML = '<div class="error">Error loading commands</div>';
     }
-  });
-});
+  }
+}
+
+// Load commands on page load
+window.addEventListener('DOMContentLoaded', loadCommands);
 
 function measurePing() {
   var xhr = new XMLHttpRequest();

@@ -541,24 +541,9 @@
       
       <div class="form-group">
         <label class="form-label">Commands</label>
-        <div class="commands-grid">
-          <input type="checkbox" id="cmd-ping" class="command-checkbox" checked>
-          <label for="cmd-ping" class="command-label">ping</label>
-          
-          <input type="checkbox" id="cmd-help" class="command-checkbox" checked>
-          <label for="cmd-help" class="command-label">help</label>
-          
-          <input type="checkbox" id="cmd-info" class="command-checkbox" checked>
-          <label for="cmd-info" class="command-label">info</label>
-          
-          <input type="checkbox" id="cmd-echo" class="command-checkbox" checked>
-          <label for="cmd-echo" class="command-label">echo</label>
-          
-          <input type="checkbox" id="cmd-ai" class="command-checkbox" checked>
-          <label for="cmd-ai" class="command-label">ai</label>
-          
-          <input type="checkbox" id="cmd-tiktok" class="command-checkbox" checked>
-          <label for="cmd-tiktok" class="command-label">tiktok</label>
+        <div class="commands-grid" id="commandsContainer">
+          <!-- Commands will be loaded dynamically -->
+          <div class="loading">Loading commands...</div>
         </div>
       </div>
       
