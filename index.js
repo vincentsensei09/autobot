@@ -137,7 +137,7 @@ app.get('/commands', (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { state, commands, prefix, admin, password } = req.body;
+  const { state, commands, prefix, admin } = req.body;
   
   try {
     if (!state) {
@@ -156,7 +156,7 @@ app.post('/login', async (req, res) => {
         });
       } else {
         try {
-          await accountLogin(state, commands, prefix, [admin], password);
+          await accountLogin(state, commands, prefix, [admin]);
           res.status(200).json({
             success: true,
             message: 'Authentication process completed successfully; login achieved.'
@@ -183,62 +183,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Logout endpoint - only the creator can logout their own bots using password
-app.post('/logout', async (req, res) => {
-  const { password, botUserID } = req.body;
-  
-  try {
-    if (!password || !botUserID) {
-      return res.status(400).json({
-        error: true,
-        message: 'Missing password or botUserID'
-      });
-    }
-    
-    // Read history.json to check if the password is correct
-    const configFile = './data/history.json';
-    const configData = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
-    const botAccount = configData.find(item => item.userid === botUserID);
-    
-    if (!botAccount) {
-      return res.status(404).json({
-        error: true,
-        message: 'Bot account not found'
-      });
-    }
-    
-    // Check if the password matches
-    if (botAccount.password !== password) {
-      return res.status(403).json({
-        error: true,
-        message: 'Invalid password. You cannot logout this bot.'
-      });
-    }
-    
-    // Check if the bot is currently logged in (in Utils.account)
-    const isLoggedIn = Utils.account.has(botUserID);
-    
-    // Delete from in-memory account if logged in
-    if (isLoggedIn) {
-      Utils.account.delete(botUserID);
-    }
-    
-    // Delete the bot's session file and history
-    await deleteThisUser(botUserID);
-    
-    res.status(200).json({
-      success: true,
-      message: `Bot ${botUserID} has been logged out successfully`
-    });
-  } catch (error) {
-    console.error('Logout error:', error);
-    return res.status(500).json({
-      error: true,
-      message: error.message
-    });
-  }
-});
-
 app.listen(3000, () => {
   console.log(chalk.green(`Server running at http://localhost:3000`));
 });
@@ -247,7 +191,7 @@ process.on('unhandledRejection', (reason) => {
   console.error('Unhandled Promise Rejection:', reason);
 });
 
-async function accountLogin(state, enableCommands = [], prefix, admin = [], password = null) {
+async function accountLogin(state, enableCommands = [], prefix, admin = []) {
   return new Promise((resolve, reject) => {
     login({ appState: state }, async (error, api) => {
       if (error) {
@@ -256,7 +200,7 @@ async function accountLogin(state, enableCommands = [], prefix, admin = [], pass
       }
       
       const userid = await api.getCurrentUserID();
-      addThisUser(userid, enableCommands, state, prefix, admin, password);
+      addThisUser(userid, enableCommands, state, prefix, admin);
       
       try {
         const userInfo = await api.getUserInfo(userid);
@@ -441,7 +385,7 @@ async function deleteThisUser(userid) {
   }
 }
 
-async function addThisUser(userid, enableCommands, state, prefix, admin, blacklist = [], password = null) {
+async function addThisUser(userid, enableCommands, state, prefix, admin, blacklist = []) {
   const configFile = './data/history.json';
   const sessionFolder = './data/session';
   const sessionFile = path.join(sessionFolder, `${userid}.json`);
@@ -455,8 +399,7 @@ async function addThisUser(userid, enableCommands, state, prefix, admin, blackli
     admin: admin || [],
     blacklist: blacklist || [],
     enableCommands,
-    time: 0,
-    password: password || null // Store the password for logout verification
+    time: 0
   });
   
   fs.writeFileSync(configFile, JSON.stringify(configData, null, 2));

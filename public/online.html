@@ -1,144 +1,405 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Active Accounts</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+  <title>Active Accounts - VINCENTSENSEI</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary: #ff00ff;
+      --secondary: #00ffff;
+      --tertiary: #ffff00;
+      --quaternary: #ff0000;
+      --bg-dark: #0a0a0f;
+      --glass: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg-dark);
+      min-height: 100vh;
+      overflow-x: hidden;
+      perspective: 1000px;
+    }
+    
+    /* Animated Background */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+    
+    .bg-animation::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(0, 255, 255, 0.3) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255, 0, 255, 0.3) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 80%, rgba(255, 255, 0, 0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(0, 255, 0, 0.2) 0%, transparent 50%);
+      animation: bgPulse 15s ease-in-out infinite;
+    }
+    
+    @keyframes bgPulse {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(5%, 5%) rotate(5deg); }
+      50% { transform: translate(0, 10%) rotate(0deg); }
+      75% { transform: translate(-5%, 5%) rotate(-5deg); }
+    }
+    
+    /* Floating Orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: float 20s infinite ease-in-out;
+      opacity: 0.5;
+    }
+    
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: linear-gradient(45deg, var(--secondary), var(--primary));
+      top: 10%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+    
+    .orb-2 {
+      width: 300px;
+      height: 300px;
+      background: linear-gradient(45deg, var(--tertiary), var(--quaternary));
+      top: 60%;
+      right: 10%;
+      animation-delay: -5s;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -30px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(20px, 30px) scale(1.05); }
+    }
+    
+    /* Main Container */
+    .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 100px 20px 20px;
+      position: relative;
+    }
+    
+    /* Title */
+    .title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 40px;
+      background: linear-gradient(90deg, var(--secondary), var(--primary), var(--tertiary), var(--secondary));
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: rainbow 5s linear infinite;
+      text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+      letter-spacing: 3px;
+    }
+    
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+    
+    /* Account Cards */
+    .accounts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 25px;
+      width: 100%;
+      max-width: 1200px;
+    }
+    
     .account-card {
-      background: white;
-      border-radius: 15px;
-      padding: 20px;
-      margin: 15px 0;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 25px;
+      padding: 25px;
       display: flex;
       align-items: center;
+      gap: 20px;
+      transform-style: preserve-3d;
+      transition: all 0.4s ease;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
     }
+    
+    .account-card:hover {
+      transform: translateY(-10px) rotateX(5deg);
+      box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(0, 255, 255, 0.2);
+      border-color: var(--secondary);
+    }
+    
     .account-avatar {
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      margin-right: 20px;
       object-fit: cover;
+      border: 3px solid var(--primary);
+      box-shadow: 0 0 20px var(--primary);
+      animation: pulse 2s infinite;
     }
-    .account-info h4 {
-      margin: 0;
-      color: #333;
+    
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 20px var(--primary); }
+      50% { box-shadow: 0 0 40px var(--primary), 0 0 60px var(--secondary); }
     }
+    
+    .account-info {
+      flex: 1;
+    }
+    
+    .account-info h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    
     .account-info p {
-      margin: 5px 0 0;
-      color: #666;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+    
     .online-badge {
-      background: #28a745;
-      color: white;
-      padding: 5px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #00ff00, #00ffff);
+      color: #000;
+      padding: 8px 16px;
       border-radius: 20px;
-      font-size: 12px;
-      margin-left: auto;
+      font-weight: 700;
+      font-size: 0.85rem;
+      animation: glow 2s infinite;
     }
+    
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 10px #00ff00; }
+      50% { box-shadow: 0 0 25px #00ff00, 0 0 35px #00ffff; }
+    }
+    
+    .online-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #000;
+      border-radius: 50%;
+      animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .empty-state i {
+      font-size: 5rem;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .empty-state h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+    
+    /* Loading */
     .loading {
       text-align: center;
-      padding: 50px;
+      padding: 60px 20px;
     }
-    .creator-input {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 10px;
+    
+    .loading i {
+      font-size: 3rem;
+      color: var(--secondary);
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    
+    .nav-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .nav-link {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-link:hover {
+      color: var(--secondary);
+      text-shadow: 0 0 10px var(--secondary);
+    }
+    
+    .nav-link.active {
+      color: var(--primary);
+    }
+    
+    /* Footer */
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
       padding: 15px;
-      margin-bottom: 20px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.85rem;
+      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
     }
-    .logout-btn {
-      background: #dc3545;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-left: 10px;
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .title {
+        font-size: 1.8rem;
+      }
+      
+      .accounts-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .account-card {
+        padding: 20px;
+      }
+      
+      .account-avatar {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .navbar {
+        padding: 10px 15px;
+      }
+      
+      .nav-links {
+        gap: 10px;
+      }
+      
+      .nav-link {
+        font-size: 0.85rem;
+      }
     }
-    .logout-btn:hover {
-      background: #c82333;
-    }
-    .logout-btn:disabled {
-      background: #aaa;
-      cursor: not-allowed;
+    
+    @media (max-width: 480px) {
+      .title {
+        font-size: 1.5rem;
+      }
+      
+      .account-info h3 {
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="#">Active Accounts</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse justify-content-end" id="navbarNav" style="margin-right: 70px;">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="/">Home</a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">Features</a>
-          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item" href="/guide">Step-By-Step Guide</a>
-          </div>
-        </li>
-        <li class="nav-item active">
-          <a class="nav-link" href="/active">Active <span class="sr-only">(current)</span></a>
-        </li>
-      </ul>
+  <!-- Animated Background -->
+  <div class="bg-animation">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+  
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-logo">VINCENTSENSEI</div>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/active" class="nav-link active">Active</a>
+      <a href="/guide" class="nav-link">Guide</a>
     </div>
   </nav>
   
   <div class="container">
-    <h1 class="col text-center" style="font-size: 20px; padding: 10px;">Active Bot Accounts</h1>
-    
-    <!-- Password Input -->
-    <div class="creator-input">
-      <label for="logoutPassword"><strong>Logout Password:</strong></label>
-      <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <input type="password" id="logoutPassword" class="form-control" placeholder="Enter your logout password">
-        <button class="btn btn-primary" onclick="savePassword()">Save</button>
-      </div>
-      <small class="text-muted">Enter the password you set when adding the bot to enable logout.</small>
-    </div>
-    
+    <h1 class="title">Active Bot Accounts</h1>
     <div id="accounts-container">
       <div class="loading">
-        <i class="fas fa-spinner fa-spin fa-3x"></i>
+        <i class="fas fa-spinner fa-spin"></i>
         <p>Loading accounts...</p>
       </div>
     </div>
   </div>
   
   <div class="footer">
-    <p>Time: <span id="time"></span></p>
-    <p>Ping: <span id="ping"></span></p>
+    <span id="time"></span> | <span id="ping"></span> | VINCENTSENSEI © 2024
   </div>
   
   <script>
-    // Load saved password from localStorage
-    window.onload = function() {
-      const savedPassword = localStorage.getItem('logoutPassword');
-      if (savedPassword) {
-        document.getElementById('logoutPassword').value = savedPassword;
-      }
-    };
-    
-    function savePassword() {
-      const password = document.getElementById('logoutPassword').value.trim();
-      if (password) {
-        localStorage.setItem('logoutPassword', password);
-        alert('Password saved! You can now logout your bots.');
-        loadAccounts();
-      } else {
-        alert('Please enter a password');
-      }
-    }
-    
     function updateTime() {
       const now = new Date();
       const options = {
@@ -170,89 +431,54 @@
     }
     setInterval(measurePing, 1000);
     
-    async function logoutBot(botUserID) {
-      const password = document.getElementById('logoutPassword').value.trim();
-      
-      if (!password) {
-        alert('Please enter your logout password first!');
-        return;
-      }
-      
-      if (!confirm('Are you sure you want to logout this bot? This action cannot be undone.')) {
-        return;
-      }
-      
-      try {
-        const response = await fetch('/logout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            password: password,
-            botUserID: botUserID
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          alert('Bot logged out successfully!');
-          loadAccounts();
-        } else {
-          alert('Error: ' + result.message);
-        }
-      } catch (error) {
-        console.error('Error logging out:', error);
-        alert('Error logging out bot');
-      }
-    }
-    
     async function loadAccounts() {
       try {
         const response = await fetch('/info');
         const accounts = await response.json();
         const container = document.getElementById('accounts-container');
-        const password = document.getElementById('logoutPassword').value.trim();
         
         if (accounts.length === 0) {
-          container.innerHTML = '<div class="text-center"><p>No active accounts</p></div>';
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-robot"></i>
+              <h2>No Active Bots</h2>
+              <p>Add a bot through the login page to get started!</p>
+            </div>
+          `;
           return;
         }
         
-        container.innerHTML = '';
+        container.innerHTML = '<div class="accounts-grid">';
         
         accounts.forEach(account => {
           const card = document.createElement('div');
           card.className = 'account-card';
-          
-          // Show logout button if password is entered
-          const showLogout = password && password.length > 0;
-          
           card.innerHTML = `
-            <img src="${account.thumbSrc || 'https://via.placeholder.com/60'}" alt="Avatar" class="account-avatar">
+            <img src="${account.thumbSrc || 'https://via.placeholder.com/80'}" alt="Avatar" class="account-avatar">
             <div class="account-info">
-              <h4>${account.name || 'Unknown'}</h4>
-              <p>Online Time: ${account.time || 0} seconds</p>
+              <h3>${account.name || 'Unknown'}</h3>
+              <p><i class="fas fa-clock"></i> Online Time: ${account.time || 0} seconds</p>
             </div>
             <span class="online-badge">Online</span>
-            ${showLogout ? `<button class="logout-btn" onclick="logoutBot('${account.userid}')">Logout</button>` : ''}
           `;
           container.appendChild(card);
         });
+        
+        container.innerHTML += '</div>';
       } catch (error) {
         console.error('Error loading accounts:', error);
-        document.getElementById('accounts-container').innerHTML = '<div class="text-center"><p>Error loading accounts</p></div>';
+        document.getElementById('accounts-container').innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>Error Loading Accounts</h2>
+            <p>Please try again later.</p>
+          </div>
+        `;
       }
     }
     
     loadAccounts();
     setInterval(loadAccounts, 5000);
   </script>
-  
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
 </body>
 </html>

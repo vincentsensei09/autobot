@@ -48,11 +48,6 @@ async function State() {
     const appState = JSON.parse(jsonInput.value);
     
     if (appState && typeof appState === 'object') {
-      const password = document.getElementById('inputOfPassword').value;
-      if (!password) {
-        return showResult('Please enter a logout password.');
-      }
-      
       const response = await fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -60,8 +55,7 @@ async function State() {
           state: appState,
           commands: Commands,
           prefix: document.getElementById('inputOfPrefix').value || '/',
-          admin: document.getElementById('inputOfAdmin').value || '',
-          password: password
+          admin: document.getElementById('inputOfAdmin').value || ''
         }),
       });
       
