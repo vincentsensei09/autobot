@@ -1,0 +1,18 @@
+{
+  "name": "autobot",
+  "version": "1.0.0",
+  "description": "Facebook Messenger Bot with Web Interface",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@dongdev/fca-unofficial": "^1.0.0",
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "chalk": "^3.0.0",
+    "fs-extra": "^11.1.1",
+    "node-cron": "^3.0.3",
+    "axios": "^1.6.5"
+  }
+}

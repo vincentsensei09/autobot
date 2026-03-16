@@ -1,0 +1,26 @@
+[
+  {
+    "userid": "61578483050866",
+    "prefix": "/",
+    "admin": [
+      "100086689301511"
+    ],
+    "blacklist": [],
+    "enableCommands": [
+      {
+        "commands": [
+          "ai",
+          "echo",
+          "help",
+          "info",
+          "ping",
+          "tiktok"
+        ]
+      },
+      {
+        "handleEvent": []
+      }
+    ],
+    "time": 1830
+  }
+]

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Active Accounts</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .account-card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin: 15px 0;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+    }
+    .account-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin-right: 20px;
+      object-fit: cover;
+    }
+    .account-info h4 {
+      margin: 0;
+      color: #333;
+    }
+    .account-info p {
+      margin: 5px 0 0;
+      color: #666;
+    }
+    .online-badge {
+      background: #28a745;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-left: auto;
+    }
+    .loading {
+      text-align: center;
+      padding: 50px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">Active Accounts</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav" style="margin-right: 70px;">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">Features</a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item" href="/guide">Step-By-Step Guide</a>
+          </div>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/active">Active <span class="sr-only">(current)</span></a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <h1 class="col text-center" style="font-size: 20px; padding: 10px;">Active Bot Accounts</h1>
+    <div id="accounts-container">
+      <div class="loading">
+        <i class="fas fa-spinner fa-spin fa-3x"></i>
+        <p>Loading accounts...</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <p>Time: <span id="time"></span></p>
+    <p>Ping: <span id="ping"></span></p>
+  </div>
+  
+  <script>
+    function updateTime() {
+      const now = new Date();
+      const options = {
+        timeZone: 'Asia/Manila',
+        hour12: true,
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+      };
+      const formattedTime = now.toLocaleString('en-US', options);
+      document.getElementById('time').textContent = formattedTime;
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+    
+    function measurePing() {
+      var xhr = new XMLHttpRequest();
+      var startTime, endTime;
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          endTime = Date.now();
+          var pingTime = endTime - startTime;
+          document.getElementById("ping").textContent = pingTime + " ms";
+        }
+      };
+      xhr.open("GET", location.href + "?t=" + new Date().getTime());
+      startTime = Date.now();
+      xhr.send();
+    }
+    setInterval(measurePing, 1000);
+    
+    async function loadAccounts() {
+      try {
+        const response = await fetch('/info');
+        const accounts = await response.json();
+        const container = document.getElementById('accounts-container');
+        
+        if (accounts.length === 0) {
+          container.innerHTML = '<div class="text-center"><p>No active accounts</p></div>';
+          return;
+        }
+        
+        container.innerHTML = '';
+        
+        accounts.forEach(account => {
+          const card = document.createElement('div');
+          card.className = 'account-card';
+          card.innerHTML = `
+            <img src="${account.thumbSrc || 'https://via.placeholder.com/60'}" alt="Avatar" class="account-avatar">
+            <div class="account-info">
+              <h4>${account.name || 'Unknown'}</h4>
+              <p>Online Time: ${account.time || 0} seconds</p>
+            </div>
+            <span class="online-badge">Online</span>
+          `;
+          container.appendChild(card);
+        });
+      } catch (error) {
+        console.error('Error loading accounts:', error);
+        document.getElementById('accounts-container').innerHTML = '<div class="text-center"><p>Error loading accounts</p></div>';
+      }
+    }
+    
+    loadAccounts();
+    setInterval(loadAccounts, 5000);
+  </script>
+  
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+</body>
+</html>
