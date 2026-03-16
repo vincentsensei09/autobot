@@ -4,7 +4,11 @@
   "description": "Facebook Messenger Bot with Web Interface",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "postinstall": "npm rebuild"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@dongdev/fca-unofficial": "^1.0.0",

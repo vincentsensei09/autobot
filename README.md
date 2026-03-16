@@ -1,106 +1,45 @@
 # Autobot
 
-A Facebook Messenger Bot with Web Interface using @dongdev/fca-unofficial.
+Facebook Messenger Bot with Web Interface
 
-## Features
+## Deploy to Render.com
 
-- 🌐 Web Interface for easy login
-- 👥 Multi-account support
-- 📝 Custom commands system
-- 🔒 Permission levels (admin, thread admin, user)
-- ⏱️ Cooldown system
-- 🎮 Various built-in commands
+1. **Push to GitHub** - Make sure `node_modules` and `package-lock.json` are NOT uploaded (added to .gitignore)
 
-## Installation
+2. **Create Render.com Account** - Go to https://render.com and sign up
+
+3. **Create New Web Service**
+   - Connect your GitHub repository
+   - Select the `autobot` folder/repository
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+
+4. **Environment Variables** - None required
+
+5. **Deploy** - Click Deploy
+
+## Local Development
 
 ```bash
 cd autobot
 npm install
-```
-
-## Setup
-
-1. **Start the bot:**
-```bash
 npm start
 ```
 
-2. **Open web interface:**
-```
-http://localhost:3000
-```
+Open http://localhost:3000
 
-3. **Get Appstate:**
-   - Use Kiwi Browser with C3C fbstate extension
-   - Or use a Facebook cookie extractor
-   - Paste the appstate in the web interface
+## Features
 
-4. **Configure:**
-   - Select commands to enable
-   - Set prefix (default: /)
-   - Add admin UID (optional)
-   - Accept terms and submit
+- Web Interface for login
+- Multi-account support
+- Custom commands
+- Permission system
 
 ## Commands
 
-- `/ping` - Check bot response time
-- `/help` - Show all available commands
-- `/info` - Get bot information
-- `/echo <text>` - Echo back your message
-- `/ai <message>` - Chat with SimSimi AI
-- `/tiktok <search>` - Search TikTok videos
-
-## Adding Commands
-
-Create a new file in `cmd/` folder:
-
-```js
-module.exports.config = {
-  name: "commandname",
-  version: "1.0.0",
-  hasPermssion: 0, // 0 = everyone, 1 = admin, 2 = thread admin
-  credits: "Your Name",
-  description: "Command description",
-  commandCategory: "category",
-  usages: "<args>",
-  cooldowns: 5
-};
-
-module.exports.run = async function({ api, event, args }) {
-  const { threadID, messageID } = event;
-  api.sendMessage("Hello!", threadID, messageID);
-};
-```
-
-## Project Structure
-
-```
-autobot/
-├── index.js          # Main bot file
-├── package.json      # Dependencies
-├── public/           # Web interface
-│   ├── index.html
-│   ├── guide.html
-│   ├── online.html
-│   ├── script.js
-│   └── styles.css
-├── cmd/              # Commands
-│   ├── ping.js
-│   ├── help.js
-│   ├── info.js
-│   ├── echo.js
-│   ├── ai.js
-│   └── tiktok.js
-└── README.md
-```
-
-## Web Interface
-
-- **Home** (`/`) - Login with appstate
-- **Guide** (`/guide`) - Step-by-step setup guide
-- **Active** (`/active`) - View active bot accounts
-
-## Requirements
-
-- Node.js 18+
-- Facebook account (appstate)
+- /ping - Check response time
+- /help - Show commands
+- /info - Bot info
+- /echo <text> - Echo message
+- /ai <message> - Chat with AI
+- /tiktok <search> - Search TikTok
