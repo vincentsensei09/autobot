@@ -31,101 +31,70 @@ module.exports.run = async function({ api, event, args }) {
     return;
   }
 
+  // Ensure cache directory exists
+  await fs.ensureDir(CACHE_DIR);
+
+  let tempFilePath;
+
   try {
     const loadingMsg = await api.sendMessage("⏳ Downloading TikTok video...", threadID, messageID);
 
-    // Using free TikTok API
-    const apiUrls = [
-      `https://api.ryzendesu.vip/api/tools/tiktok?url=${encodeURIComponent(tiktokUrl)}`,
-      `https://api.tiklydown.me/v2/download?url=${encodeURIComponent(tiktokUrl)}`,
-      `https://ssstik.io/ajax?url=${encodeURIComponent(tiktokUrl)}`
-    ];
-
-    let videoData = null;
+    // Try different TikTok APIs
     let videoUrl = null;
+    let videoData = {};
 
-    for (const apiUrl of apiUrls) {
+    // API 1: ryzen-api
+    try {
+      const response = await axios.get(`https://api.ryzendesu.vip/api/tools/tiktok?url=${encodeURIComponent(tiktokUrl)}`, {
+        timeout: 20000,
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+      });
+      if (response.data?.data?.video?.play) {
+        videoUrl = response.data.data.video.play;
+        videoData = response.data.data;
+      }
+    } catch (e) {
+      console.log('API 1 failed:', e.message);
+    }
+
+    // API 2: tiklydown
+    if (!videoUrl) {
       try {
-        const response = await axios.get(apiUrl, { 
-          timeout: 15000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
+        const response = await axios.get(`https://api.tiklydown.me/v2/download?url=${encodeURIComponent(tiktokUrl)}`, {
+          timeout: 20000,
+          headers: { 'User-Agent': 'Mozilla/5.0' }
         });
-
-        // Try different API response formats
-        if (response.data?.data?.video) {
-          videoUrl = response.data.data.video.play || response.data.data.video.url;
-          videoData = response.data.data;
-          break;
-        } else if (response.data?.video) {
-          videoUrl = response.data.video;
+        if (response.data?.video?.downloadUrl) {
+          videoUrl = response.data.video.downloadUrl;
           videoData = response.data;
-          break;
-        } else if (response.data?.tiktok) {
-          videoUrl = response.data.tiktok.video || response.data.tiktok.play;
-          videoData = response.data.tiktok;
-          break;
         }
       } catch (e) {
-        console.log(`TikTok API ${apiUrl} failed: ${e.message}`);
-        continue;
+        console.log('API 2 failed:', e.message);
       }
     }
 
     if (!videoUrl) {
-      // Fallback: try to get from SSSTik
-      try {
-        const ssResponse = await axios.get(`https://ssstik.io/ajax?url=${encodeURIComponent(tiktokUrl)}`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        if (ssResponse.data?.html) {
-          const match = ssResponse.data.html.match(/href="(https:\/\/[^"]+)"/);
-          if (match) {
-            videoUrl = match[1];
-            videoData = { title: 'TikTok Video' };
-          }
-        }
-      } catch (e) {
-        console.log('SSSTik fallback failed:', e.message);
-      }
-    }
-
-    if (!videoUrl) {
-      api.sendMessage(
-        "❌ Could not download TikTok video.\nThe video might be private or unavailable.",
-        threadID,
-        messageID
-      );
+      await api.unsendMessage(loadingMsg.messageID);
+      api.sendMessage("❌ Could not download video. The video might be private or unavailable.", threadID, messageID);
       return;
     }
 
     // Get video info
-    const author = videoData?.author?.nickname || videoData?.author?.unique_id || 'Unknown';
-    const title = videoData?.title || 'TikTok Video';
+    const author = videoData?.author?.nickname || videoData?.video?.author?.name || 'Unknown';
+    const title = videoData?.title || videoData?.video?.title || 'TikTok Video';
 
-    const message = `✅ TikTok Video Downloaded!\n\n👤 Author: ${author}\n📝 Title: ${title}`;
-
-    await api.unsendMessage(loadingMsg.messageID);
-
-    // Ensure cache directory exists
-    await fs.ensureDir(CACHE_DIR);
-
-    const filePath = path.join(CACHE_DIR, `tiktok_video_${Date.now()}.mp4`);
-    const writer = fs.createWriteStream(filePath);
+    // Download video
+    const filePath = path.join(CACHE_DIR, `tiktok_${Date.now()}.mp4`);
+    tempFilePath = filePath;
 
     const videoResponse = await axios({
       method: 'get',
       url: videoUrl,
       responseType: 'stream',
-      timeout: 120000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
+      timeout: 120000
     });
 
+    const writer = fs.createWriteStream(filePath);
     videoResponse.data.pipe(writer);
 
     await new Promise((resolve, reject) => {
@@ -133,40 +102,38 @@ module.exports.run = async function({ api, event, args }) {
       writer.on('error', reject);
     });
 
-    // Check file size (limit to 16MB for Facebook)
+    // Check file size
     const fileSize = fs.statSync(filePath).size;
     const maxSize = 16 * 1024 * 1024; // 16MB
 
     if (fileSize > maxSize) {
-      fs.unlink(filePath).catch(console.error);
+      fs.unlink(filePath).catch(() => {});
       api.sendMessage(
-        `✅ TikTok Video!\n\n👤 Author: ${author}\n📝 Title: ${title}\n\n⚠️ Video too large to send (${(fileSize/1024/1024).toFixed(2)}MB). Max is 16MB.\n\n📥 Download link: ${videoUrl}`,
+        `✅ TikTok Video!\n👤 Author: ${author}\n📝 Title: ${title}\n\n⚠️ Video too large (${(fileSize/1024/1024).toFixed(2)}MB). Max 16MB.\n\n🔗 Download: ${videoUrl}`,
         threadID,
         messageID
       );
       return;
     }
 
+    await api.unsendMessage(loadingMsg.messageID);
+
+    // Send video with callback
     api.sendMessage(
-      { body: message, attachment: fs.createReadStream(filePath) },
+      { body: `✅ TikTok Video!\n👤 Author: ${author}\n📝 Title: ${title}`, attachment: fs.createReadStream(filePath) },
       threadID,
       (err) => {
-        fs.unlink(filePath).catch(console.error);
-        
+        if (tempFilePath) fs.unlink(tempFilePath).catch(() => {});
         if (err) {
-          console.error("Send video error:", err);
-          api.sendMessage(
-            `✅ TikTok Video!\n\n👤 Author: ${author}\n📝 Title: ${title}\n\n⚠️ Could not send video file.\n\n📥 Download: ${videoUrl}`,
-            threadID,
-            messageID
-          );
+          console.error("Send error:", err);
+          api.sendMessage(`✅ TikTok Video!\n👤 Author: ${author}\n📝 Title: ${title}\n\n🔗 Download: ${videoUrl}`, threadID, messageID);
         }
-      },
-      messageID
+      }
     );
 
   } catch (error) {
     console.error("TikTok Error:", error.message);
+    if (tempFilePath) fs.unlink(tempFilePath).catch(() => {});
     api.sendMessage("Error: " + error.message, threadID, messageID);
   }
 };
