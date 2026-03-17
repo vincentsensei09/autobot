@@ -148,10 +148,12 @@ class Storage {
       config: this.config
     };
     
+    console.log("[Storage] Saving data - History:", this.history.length, "items, Database:", this.database.length, "items");
+    
     if (this.isExternal && STORAGE_CONFIG.jsonbinApiKey) {
       const success = await writeJsonBin(data);
       if (success) {
-        console.log("[Storage] Saved to external storage");
+        console.log("[Storage] Saved to external storage (JSONBin)");
         return true;
       }
     }

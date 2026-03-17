@@ -190,8 +190,10 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log(chalk.green(`Server running at http://localhost:3000`));
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(chalk.green(`Server running at http://localhost:${PORT}`));
   main();
 });
 
@@ -419,17 +421,25 @@ async function addThisUser(userid, enableCommands, state, prefix, admin, blackli
   const sessionFolder = './data/session';
   const sessionFile = path.join(sessionFolder, `${userid}.json`);
   
-  if (fs.existsSync(sessionFile)) return;
+  if (fs.existsSync(sessionFile)) {
+    console.log(`[Storage] Session for ${userid} already exists, skipping history add`);
+    return;
+  }
   
-  // Add to storage
-  await Storage.addHistory({
-    userid,
-    prefix: prefix || "",
-    admin: admin || [],
-    blacklist: blacklist || [],
-    enableCommands,
-    time: 0
-  });
+  try {
+    // Add to storage
+    await Storage.addHistory({
+      userid,
+      prefix: prefix || "",
+      admin: admin || [],
+      blacklist: blacklist || [],
+      enableCommands,
+      time: 0
+    });
+    console.log(`[Storage] Added user ${userid} to history`);
+  } catch (error) {
+    console.error(`[Storage] Error adding to history:`, error.message);
+  }
   
   fs.writeFileSync(sessionFile, JSON.stringify(state));
 }
