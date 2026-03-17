@@ -9,12 +9,12 @@ const fs = require("fs");
 const path = require("path");
 
 // Configuration for external storage
-// You can use services like: jsonbin.io, file.io, or any cloud storage
+// You can use services like: jsonbin.io, or any cloud storage
 const STORAGE_CONFIG = {
-  // Set these environment variables in Render dashboard
-  jsonbinApiKey: process.env.JSONBIN_API_KEY || "",
-  jsonbinBinId: process.env.JSONBIN_BIN_ID || "",
-  useExternalStorage: process.env.USE_EXTERNAL_STORAGE === "true",
+  // Set these environment variables in Railway dashboard
+  jsonbinApiKey: process.env.JSONBIN_KEY || process.env.JSONBIN_API_KEY || "",
+  jsonbinBinId: process.env.JSONBIN_ID || process.env.JSONBIN_BIN_ID || "",
+  useExternalStorage: process.env.JSONBIN_ID && process.env.JSONBIN_KEY,
   
   // Fallback to local file storage (default)
   dataDir: path.join(__dirname, "data"),

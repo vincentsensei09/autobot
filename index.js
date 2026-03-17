@@ -9,6 +9,7 @@ const cron = require('node-cron');
 const fsExtra = require('fs-extra');
 const Storage = require('./storage');
 
+const SCRIPT_DIR = path.join(__dirname, 'script');
 const CMD_DIR = path.join(__dirname, 'cmd');
 const DATA_DIR = path.join(__dirname, 'data');
 
@@ -36,6 +37,49 @@ const Utils = new Object({
   replyData: new Map(),
 });
 
+// Load commands from script folder (AUTO-main style)
+fs.readdirSync(SCRIPT_DIR).forEach((file) => {
+  const scripts = path.join(SCRIPT_DIR, file);
+  const stats = fs.statSync(scripts);
+  if (stats.isDirectory()) {
+    // Event commands
+    fs.readdirSync(scripts).forEach((file) => {
+      try {
+        const { config, run, handleEvent } = require(path.join(scripts, file));
+        if (config) {
+          const { name = [], role = '0', version = '1.0.0', hasPrefix = true, aliases = [], description = '', usage = '', credits = '', cooldown = '5' } = Object.fromEntries(Object.entries(config).map(([key, value]) => [key.toLowerCase(), value]));
+          aliases.push(name);
+          if (run) {
+            Utils.commands.set(aliases, { name, role, run, aliases, description, usage, version, hasPrefix, credits, cooldown });
+          }
+          if (handleEvent) {
+            Utils.handleEvent.set(aliases, { name, handleEvent, role, description, usage, version, hasPrefix, credits, cooldown });
+          }
+        }
+      } catch (error) {
+        console.error(chalk.red(`Error loading event command ${file}: ${error.message}`));
+      }
+    });
+  } else if (file.endsWith('.js')) {
+    try {
+      const { config, run, handleEvent } = require(scripts);
+      if (config) {
+        const { name = [], role = '0', version = '1.0.0', hasPrefix = true, aliases = [], description = '', usage = '', credits = '', cooldown = '5' } = Object.fromEntries(Object.entries(config).map(([key, value]) => [key.toLowerCase(), value]));
+        aliases.push(name);
+        if (run) {
+          Utils.commands.set(aliases, { name, role, run, aliases, description, usage, version, hasPrefix, credits, cooldown });
+        }
+        if (handleEvent) {
+          Utils.handleEvent.set(aliases, { name, handleEvent, role, description, usage, version, hasPrefix, credits, cooldown });
+        }
+      }
+    } catch (error) {
+      console.error(chalk.red(`Error loading command ${file}: ${error.message}`));
+    }
+  }
+});
+
+// Load commands from cmd folder (user custom commands)
 fs.readdirSync(CMD_DIR).forEach((file) => {
   if (!file.endsWith('.js')) return;
   
@@ -453,7 +497,7 @@ function aliases(command) {
 }
 
 async function main() {
-  const cacheFile = './cmd/cache';
+  const cacheFile = './script/cache';
   if (!fs.existsSync(cacheFile)) fs.mkdirSync(cacheFile);
   
   // Initialize config first

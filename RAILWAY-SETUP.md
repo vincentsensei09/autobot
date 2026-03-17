@@ -4,7 +4,7 @@
 Make sure your code is pushed to GitHub:
 ```bash
 git add .
-git commit -m "Add Railway deployment"
+git commit -m "Add Railway deployment with AUTO-main structure"
 git push origin main
 ```
 
@@ -28,7 +28,7 @@ In Railway dashboard, go to "Variables" tab and add:
 1. Go to [jsonbin.io](https://jsonbin.io)
 2. Create account / Login
 3. Create a new bin (collection)
-4. Copy the Bin ID from URL (e.g., `https://jsonbin.io/ YOUR_BIN_ID`)
+4. Copy the Bin ID from URL (e.g., `https://jsonbin.io/YOUR_BIN_ID`)
 5. Create API Key in settings
 
 ## Step 4: Deploy
@@ -41,6 +41,25 @@ In Railway dashboard, go to "Variables" tab and add:
 2. Enter your Facebook appstate
 3. Set your prefix and admin
 4. Click Login
+
+## Available Commands
+Your bot now has AUTO-main style commands:
+
+### Regular Commands:
+- `help` - Command list and usage
+- `ai` - AI chatbot (GPT)
+- `trans` - Translate text
+- `music` - YouTube music search
+- `anime` - Random anime images
+- `pinterest` - Pinterest image search
+- `dictionary` - Word definition
+- `emojimix` - Mix two emojis
+- `teach` - Teach the bot
+
+### Event Commands:
+- `antiout` - Auto re-add users who leave
+- `resend` - Show unsent messages
+- `soyeon` - AI chat mode
 
 ## Troubleshooting
 
